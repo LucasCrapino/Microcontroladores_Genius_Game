@@ -4,7 +4,9 @@ Este projeto consiste no desenvolvimento de um sistema embarcado que tem como in
 # Componentes do sistema ⚙
 - Microcontrolador Raspberry Pi Pico
 - 4 botões "push"
-- 6 LEDs
+- 6 LEDs difusos 5mm
+- Jumpers Macho Macho e Macho Fêmea
+- Protoboard
 
 # Funcionalidades 🕹
 - 4 LEDs com cores diferentes acendem em ordem aleatória e incremental (um LED pisca primeiro, depois dois, e assim por diante)
