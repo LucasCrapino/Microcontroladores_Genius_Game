@@ -37,19 +37,22 @@ Este projeto consiste no desenvolvimento de um sistema embarcado que tem como in
 - Dispositivo Buzzer 5V 
 - Jumpers Macho/Macho e Macho/Fêmea
 - Protoboard 170 pontos
+- Cartão de memória SD 128GB
 
 # Requisitos
-- UR01: Ter uma interface gráfica intuitiva e acessível para os jogadores
+- UR01: O cartão de memória deve estar configurado no ambiente do Rasberry Pi corretamente, com conexão com internet e visualização dos arquivos clara
 
-- UR02: Exibir na tela a sequência aleatória que os botões acendem e armazená-la em um vetor de dados
+- UR02: Ter uma interface gráfica intuitiva e acessível para os jogadores
 
-- UR03: Captar a sequência dos botões pressionados pelo jogador e armazená-la em um vetor de dados
+- UR03: Exibir na tela a sequência aleatória que os botões acendem e armazená-la em um vetor de dados
 
-- UR04: Comparar o vetor de dados da sequência dos botões pressionados pelo jogador com o vetor de dados da sequência em que os botões acenderam
+- UR04: Captar a sequência dos botões pressionados pelo jogador e armazená-la em um vetor de dados
 
-- UR05: Utilizar Python como linguagem de programação e demais bibliotecas de suporte, como GPIO Zero para conectar com as portas do Raspberry Pi e Tkinter, para estilização da interface gráfica
+- UR05: Comparar o vetor de dados da sequência dos botões pressionados pelo jogador com o vetor de dados da sequência em que os botões acenderam
 
-- UR06: Disparar o buzzer como um alerta toda vez que o jogador pressionar o botão errado da sequência
+- UR06: Utilizar Python como linguagem de programação e demais bibliotecas de suporte, como GPIO Zero para conectar com as portas do Raspberry Pi e Tkinter, para estilização da interface gráfica
+
+- UR07: Disparar o buzzer como um alerta toda vez que o jogador pressionar o botão errado da sequência
 
 # Funcionalidades 🕹
 - O jogo se inicia com quatro botões quadriculados serem acesos em uma sequência aleatória e incremental a cada rodada (um botão acende na primeira, dois na segunda, e assim sucessivamente), além dos botões quadriculares, há dois botões circulares: um para indicar que o jogador passou para a próxima rodada e outro indicando que o jogador perdeu a rodada. Há também um contador indicando a rodada que o jogador está
