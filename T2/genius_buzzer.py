@@ -1,15 +1,23 @@
 import random
+import threading
+import os
+import requests
 import tkinter as tk
-from tkinter import messagebox
-from gpiozero import Buzzer
+from tkinter import messagebox, simpledialog, ttk
+import psycopg2
+from datetime import datetime
+from dotenv import load_dotenv
 
+# Carregar variáveis de ambiente do .env
+load_dotenv()
+
+# --- Configurações do Jogo ---
 COLORS = {
     "azul": {"normal": "#1e3a8a", "ativo": "#60a5fa"},
     "vermelho": {"normal": "#7f1d1d", "ativo": "#f87171"},
     "amarelo": {"normal": "#854d0e", "ativo": "#fde047"},
     "verde": {"normal": "#14532d", "ativo": "#86efac"},
 }
-
 BUTTON_ORDER = ["azul", "vermelho", "amarelo", "verde"]
 TIMINGS = {"blink_on_ms": 500, "blink_off_ms": 200, "click_on_ms": 200}
 DIFFICULTY_DECAY = 0.97
@@ -18,9 +26,39 @@ INTER_ROUND_DELAY_MS = 2000
 WINDOW_W = 520
 WINDOW_H = 620
 
-BUZZER_PIN = 3
-ACTIVE_HIGH = False
-buzzer = Buzzer(BUZZER_PIN, active_high=ACTIVE_HIGH, initial_value=False)
+# --- Configuração do Banco (Postgres RDS) ---
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST"),
+    "port": int(os.getenv("DB_PORT", 5432)),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME"),
+    "table": os.getenv("DB_TABLE")
+}
+
+# --- Configuração do Ubidots ---
+UBIDOTS_TOKEN = os.getenv("UBIDOTS_TOKEN")
+UBIDOTS_DEVICE = os.getenv("UBIDOTS_DEVICE")
+UBIDOTS_VARIABLE = os.getenv("UBIDOTS_VARIABLE")
+UBIDOTS_API_URL = f"https://industrial.api.ubidots.com/api/v1.6/devices/{UBIDOTS_DEVICE}"
+HEADERS_UBIDOTS = {"X-Auth-Token": UBIDOTS_TOKEN, "Content-Type": "application/json"}
+
+def send_to_ubidots(value):
+    """
+    Envia um valor para o device/variable no Ubidots.
+    Payload: { "<variable_label>": <value> }
+    """
+    if not UBIDOTS_TOKEN:
+        print("Ubidots token não configurado. Ignorando envio.")
+        return False
+    payload = {UBIDOTS_VARIABLE: value}
+    try:
+        resp = requests.post(UBIDOTS_API_URL, headers=HEADERS_UBIDOTS, json=payload, timeout=8)
+        resp.raise_for_status()
+        return True
+    except Exception as e:
+        print("Falha ao enviar para Ubidots:", e)
+        return False
 
 class SimonApp:
     def __init__(self, root: tk.Tk):
@@ -38,12 +76,7 @@ class SimonApp:
         self._build_ui()
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-    def _buzz_beep(self, ms=1000):
-        buzzer.on()
-        self.root.after(ms, buzzer.off)
-
     def _on_close(self):
-        buzzer.off()
         self.root.destroy()
 
     def _build_ui(self):
@@ -88,13 +121,8 @@ class SimonApp:
         self.btn_repeat = tk.Button(actions, text="Repetir sequência", state=tk.DISABLED,
                                     command=self.repeat_sequence, width=16)
         self.btn_repeat.pack(side=tk.LEFT)
-
-        buzzer_row = tk.Frame(container)
-        buzzer_row.grid(row=4, column=0, columnspan=2, pady=(12, 0))
-        self.btn_buzz_on = tk.Button(buzzer_row, text="Ligar buzzer", width=14, command=buzzer.on)
-        self.btn_buzz_on.pack(side=tk.LEFT, padx=(0, 8))
-        self.btn_buzz_off = tk.Button(buzzer_row, text="Desligar buzzer", width=16, command=buzzer.off)
-        self.btn_buzz_off.pack(side=tk.LEFT)
+        self.btn_show_score = tk.Button(actions, text="Ver placar", font=("Segoe UI", 12), command=self.show_score)
+        self.btn_show_score.pack(side=tk.LEFT, padx=(8,0))
 
     def _indicator_set(self, which: str, on: bool):
         if which == "red":
@@ -140,12 +168,14 @@ class SimonApp:
         self.is_showing = True
         self.btn_start.config(state=tk.DISABLED)
         self.btn_repeat.config(state=tk.DISABLED)
+        self.btn_show_score.config(state=tk.NORMAL)
         for b in self.buttons.values(): b.config(state=tk.DISABLED)
 
     def enable_actions_after_show(self):
         self.is_showing = False
         self.btn_start.config(state=tk.DISABLED)
         self.btn_repeat.config(state=tk.NORMAL)
+        self.btn_show_score.config(state=tk.NORMAL)
         for b in self.buttons.values(): b.config(state=tk.NORMAL)
         self.label_status.config(text="Sua vez! Clique na sequência correta.")
 
@@ -185,12 +215,7 @@ class SimonApp:
         self.label_status.config(text="Errou! 😵")
         def end_game():
             self.flash_all()
-            messagebox.showinfo("Você perdeu", f"Você perdeu na rodada {self.rodada_atual}!")
-            self.btn_start.config(state=tk.NORMAL)
-            self.btn_repeat.config(state=tk.DISABLED)
-            for b in self.buttons.values(): b.config(state=tk.DISABLED)
-            self.label_status.config(text="Clique em Iniciar para jogar novamente.")
-        self._buzz_beep(1000)
+            self.prompt_save_score()
         self._indicator_blink("red", times=2, when_done=end_game)
 
     def flash_all(self):
@@ -205,6 +230,82 @@ class SimonApp:
         self.blink_on_ms = max(int(self.blink_on_ms * DIFFICULTY_DECAY), MIN_BLINK_ON)
         self.disable_actions_during_show()
         self._indicator_blink("green", times=2, when_done=lambda: self.root.after(INTER_ROUND_DELAY_MS, self.seq_new_round))
+
+    def prompt_save_score(self):
+        score = self.rodada_atual - 1
+        name = simpledialog.askstring("Salvar pontuação", f"Sua pontuação: {score}\nDigite seu nome (3 letras):", parent=self.root)
+        if name:
+            name = name[:3].upper()
+            self.save_score(name, score)
+        self.btn_start.config(state=tk.NORMAL)
+        self.btn_repeat.config(state=tk.DISABLED)
+        for b in self.buttons.values(): b.config(state=tk.DISABLED)
+        self.label_status.config(text="Clique em Iniciar para jogar novamente.")
+
+    def save_score(self, name, score):
+        try:
+            conn = psycopg2.connect(
+                host=DB_CONFIG["host"],
+                port=DB_CONFIG["port"],
+                user=DB_CONFIG["user"],
+                password=DB_CONFIG["password"],
+                database=DB_CONFIG["database"]
+            )
+            cursor = conn.cursor()
+            sql = f"INSERT INTO {DB_CONFIG['table']} (nome, pontuacao) VALUES (%s, %s)"
+            cursor.execute(sql, (name, score))
+            conn.commit()
+
+            # buscar maior pontuação atual
+            cursor.execute(f"SELECT MAX(pontuacao) FROM {DB_CONFIG['table']}")
+            max_row = cursor.fetchone()
+            maior = max_row[0] if max_row and max_row[0] is not None else score
+
+            # enviar para Ubidots em thread para não bloquear UI
+            threading.Thread(target=send_to_ubidots, args=(maior,), daemon=True).start()
+
+        except Exception as e:
+            messagebox.showerror("Erro", f"Não foi possível salvar o placar:\n{e}")
+        finally:
+            try:
+                cursor.close()
+                conn.close()
+            except:
+                pass
+
+    def show_score(self):
+        try:
+            conn = psycopg2.connect(
+                host=DB_CONFIG["host"],
+                port=DB_CONFIG["port"],
+                user=DB_CONFIG["user"],
+                password=DB_CONFIG["password"],
+                database=DB_CONFIG["database"]
+            )
+            cursor = conn.cursor()
+            sql = f"SELECT nome, pontuacao, dataCriacao FROM {DB_CONFIG['table']} ORDER BY pontuacao DESC"
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+        except Exception as e:
+            messagebox.showerror("Erro", f"Não foi possível buscar o placar:\n{e}")
+            return
+        finally:
+            try:
+                cursor.close()
+                conn.close()
+            except:
+                pass
+
+        score_window = tk.Toplevel(self.root)
+        score_window.title("Placar")
+        score_window.geometry("300x300")
+        tree = ttk.Treeview(score_window, columns=("Nome", "Pontuação", "Data"), show="headings")
+        tree.heading("Nome", text="Nome")
+        tree.heading("Pontuação", text="Pontuação")
+        tree.heading("Data", text="Data")
+        tree.pack(fill=tk.BOTH, expand=True)
+        for row in rows:
+            tree.insert("", tk.END, values=row)
 
 if __name__ == "__main__":
     root = tk.Tk()
