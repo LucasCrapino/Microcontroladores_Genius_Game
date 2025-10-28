@@ -64,15 +64,9 @@ Este projeto consiste no desenvolvimento de um sistema embarcado que tem como in
 ![Diagrama de Blocos T2](./T2/DiagramaT2Microcontroladores.drawio.png)
 
 # Genius 💡- T3
-Este projeto consiste no desenvolvimento de um sistema embarcado que tem como inspiração o jogo da memória clássico Genius, um disco que dispõe de 4 cores diferentes que acendem em uma ordem aleatória e o jogador precisa adivinhar a sequência correta das cores, utilizando-se de uma interface gráfica em um display touch simulando virtualmente o minigame, com o jogador tendo que pressionar os botões na mesma sequência que estes acenderam, e em seguida registrando sua pontuação em um ranking de pontuações de outros, semelhante aos antigos games arcade clássicos dos anos 80 e 90, e podendo visualizar a maior pontuação através de uma plataforma em nuvem que permite acesso a partir de qualquer dispositivo, de modo que estimule a competitividade do game entre os jogadores da comunidade.
+Este projeto consiste no desenvolvimento de um minigame que tem como inspiração o jogo da memória clássico Genius, um disco que dispõe de 4 cores diferentes que acendem em uma ordem aleatória e o jogador precisa adivinhar a sequência correta das cores, utilizando-se de uma interface gráfica que simula virtualmente o minigame, com o jogador tendo que pressionar ou clicar nos botões na mesma sequência que estes acenderam, e em seguida registrando sua pontuação em um ranking de pontuações de outros, semelhante aos antigos games arcade clássicos dos anos 80 e 90, e podendo visualizar a maior pontuação através de uma plataforma em nuvem que permite acesso a partir de qualquer dispositivo, de modo que estimule a competitividade do game entre os jogadores da comunidade
 
 # Componentes do sistema ⚙
-- Microcomputador Raspberry Pi
-- Display touch Raspberry Pi
-- Dispositivo Buzzer 5V 
-- Jumpers Macho/Macho e Macho/Fêmea
-- Protoboard 170 pontos
-- Cartão de memória SD 128GB
 - Banco de Dados PostgreSQL hospedado no Amazon Relational Database (RDS)
 - Dashboard na plataforma de nuvem Ubidots
 
@@ -90,6 +84,8 @@ Este projeto consiste no desenvolvimento de um sistema embarcado que tem como in
 - UR06: O código deve conter a chave de API gerada pela plataforma Ubidots para enviar a requisição HTTP do tipo POST (envio de dados para o servidor).
 
 - UR07: A requisição HTTP deve retornar um código numérico informando sucesso ou fracasso de requisição.
+
+- UR08: O usuário deve visualizar sua pontuação a partir de qualquer dispositivo que utilizar, por conta dos dados estarem armazenados no banco de dados hospedado pela AWS, e o dashboard estar presente na plataforma da Ubidots, bastando apenas possuir as credenciais necessárias para acessar os resultados e dashboard.
 
 # Funcionalidades 🕹
 - O jogo se inicia com quatro botões quadriculados serem acesos em uma sequência aleatória e incremental a cada rodada (um botão acende na primeira, dois na segunda, e assim sucessivamente), além dos botões quadriculares, há dois botões circulares: um para indicar que o jogador passou para a próxima rodada e outro indicando que o jogador perdeu a rodada. Há também um contador indicando a rodada que o jogador está
