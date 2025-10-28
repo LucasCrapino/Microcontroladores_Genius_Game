@@ -104,3 +104,5 @@ Este projeto consiste no desenvolvimento de um minigame que tem como inspiraçã
 - Lucas Gozze Crapino | RA: 22.00667-2
 - Vinicius Garcia Imendes Dechechi | RA: 22.01568-0
 ![Foto dos membros](./FotoMembrosMicrocontroladores.jpeg)
+
+Observação: Para fins de segurança, dados como nome do banco de dados, usuário e senha do banco de dados e a chave API do Ubidots foram colocados em um arquivo .env que não estará presente no GitHub, como consta no arquivo .gitignore
