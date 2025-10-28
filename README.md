@@ -97,7 +97,7 @@ Este projeto consiste no desenvolvimento de um minigame que tem como inspiraçã
 - Caso a tabela esteja muito grande com muitos usuários e o jogador queira acessar somente a maior pontuação para tentar superá-la, é possível acessar a plataforma online Ubidots, que possui um dashboard indicando a pontuação máxima obtida por um jogador entre 0 e 20.
 
 # Diagrama de Blocos
-![Diagrama de Blocos T3](./T3/DiagramaT3.drawio.png)
+![Diagrama de Blocos T3](./T3/DiagramaT3Microcontroladores.drawio.png)
 
 # Integrantes 👷‍♂️
 - Felipe Kenzo Ohara Sakae | RA: 22.00815-2
